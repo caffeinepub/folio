@@ -49,8 +49,8 @@ export function EducationSection({
                 </div>
               </div>
               <div className="flex-1">
-                <div className="flex items-start justify-between">
-                  <div>
+                <div className="flex items-start justify-between gap-2">
+                  <div className="flex-1">
                     <h3
                       className="font-semibold"
                       style={{
@@ -86,14 +86,37 @@ export function EducationSection({
                       )}
                     </p>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <span
-                      className="text-xs"
-                      style={{ color: "var(--p-text2)" }}
-                    >
-                      {item.startDate}
-                      {item.endDate ? ` – ${item.endDate}` : ""}
-                    </span>
+                  <div className="flex items-center gap-2 shrink-0">
+                    {isEditing ? (
+                      <div
+                        className="flex items-center gap-1 text-xs"
+                        style={{ color: "var(--p-text2)" }}
+                      >
+                        <InlineEdit
+                          value={item.startDate || ""}
+                          onChange={(v) =>
+                            onUpdateItem?.(item.id, { startDate: v })
+                          }
+                          placeholder="Start year"
+                        />
+                        <span>–</span>
+                        <InlineEdit
+                          value={item.endDate || ""}
+                          onChange={(v) =>
+                            onUpdateItem?.(item.id, { endDate: v })
+                          }
+                          placeholder="End year"
+                        />
+                      </div>
+                    ) : (
+                      <span
+                        className="text-xs"
+                        style={{ color: "var(--p-text2)" }}
+                      >
+                        {item.startDate}
+                        {item.endDate ? ` – ${item.endDate}` : ""}
+                      </span>
+                    )}
                     {isEditing && (
                       <button
                         type="button"
