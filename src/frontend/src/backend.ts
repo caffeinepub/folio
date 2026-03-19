@@ -90,9 +90,54 @@ export class ExternalBlob {
     }
 }
 export interface backendInterface {
+    checkPin(pin: string): Promise<boolean>;
+    getPortfolio(): Promise<string>;
+    savePortfolio(newPortfolio: string, pin: string): Promise<boolean>;
 }
 export class Backend implements backendInterface {
     constructor(private actor: ActorSubclass<_SERVICE>, private _uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, private _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, private processError?: (error: unknown) => never){}
+    async checkPin(arg0: string): Promise<boolean> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.checkPin(arg0);
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.checkPin(arg0);
+            return result;
+        }
+    }
+    async getPortfolio(): Promise<string> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.getPortfolio();
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.getPortfolio();
+            return result;
+        }
+    }
+    async savePortfolio(arg0: string, arg1: string): Promise<boolean> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.savePortfolio(arg0, arg1);
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.savePortfolio(arg0, arg1);
+            return result;
+        }
+    }
 }
 export interface CreateActorOptions {
     agent?: Agent;

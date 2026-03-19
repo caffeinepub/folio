@@ -1,12 +1,15 @@
 import {
+  Check,
   Eye,
   EyeOff,
   Image,
   Layers,
   LayoutDashboard,
+  Loader2,
   Lock,
   PanelRight,
   Plus,
+  Save,
   Settings,
   Trash2,
   X,
@@ -24,7 +27,7 @@ import { GallerySection } from "../components/sections/GallerySection";
 import { HeroSection } from "../components/sections/HeroSection";
 import { ProjectsSection } from "../components/sections/ProjectsSection";
 import { SkillsSection } from "../components/sections/SkillsSection";
-import { usePortfolio } from "../hooks/usePortfolio";
+import type { usePortfolio } from "../hooks/usePortfolio";
 import { useTheme } from "../hooks/useTheme";
 import type { Section, SectionItem, SectionType } from "../types/portfolio";
 
@@ -65,12 +68,15 @@ function newItem(type: SectionType): SectionItem {
   }
 }
 
+type SaveState = "idle" | "saving" | "saved" | "error";
+
 interface Props {
   onGoPublic: () => void;
+  pin: string;
+  portfolio: ReturnType<typeof usePortfolio>;
 }
 
-export function EditView({ onGoPublic }: Props) {
-  const portfolio = usePortfolio();
+export function EditView({ onGoPublic, pin, portfolio }: Props) {
   const { data } = portfolio;
   useTheme(data.settings.theme, data.settings.fontPair);
 
@@ -80,6 +86,7 @@ export function EditView({ onGoPublic }: Props) {
   const [showSettings, setShowSettings] = useState(true);
   const [showMobileSettings, setShowMobileSettings] = useState(false);
   const [addSectionOpen, setAddSectionOpen] = useState(false);
+  const [saveState, setSaveState] = useState<SaveState>("idle");
 
   const sortedSections = [...data.sections].sort((a, b) => a.order - b.order);
 
@@ -113,6 +120,19 @@ export function EditView({ onGoPublic }: Props) {
     });
   };
 
+  const handleSave = async () => {
+    if (saveState === "saving") return;
+    setSaveState("saving");
+    const ok = await portfolio.saveToBackend(pin);
+    if (ok) {
+      setSaveState("saved");
+      setTimeout(() => setSaveState("idle"), 2000);
+    } else {
+      setSaveState("error");
+      setTimeout(() => setSaveState("idle"), 3000);
+    }
+  };
+
   const renderSection = (section: Section) => {
     const base = {
       key: section.id,
@@ -129,7 +149,6 @@ export function EditView({ onGoPublic }: Props) {
 
     return (
       <div key={section.id} className="relative">
-        {/* Section header bar */}
         <div
           className="flex items-center justify-between px-6 md:px-12 py-2 border-b"
           style={{ background: "var(--p-bg2)", borderColor: "var(--p-border)" }}
@@ -179,7 +198,6 @@ export function EditView({ onGoPublic }: Props) {
             )}
           </div>
         </div>
-        {/* Section content */}
         {(() => {
           switch (section.type) {
             case "hero":
@@ -209,6 +227,16 @@ export function EditView({ onGoPublic }: Props) {
                   profile={data.profile}
                   isEditing
                   onUpdate={base.onUpdate}
+                  onUpdateProfile={portfolio.updateProfile}
+                  onAddItem={() =>
+                    portfolio.addItem(section.id, {
+                      id: Math.random().toString(36).slice(2),
+                      title: "Link Label",
+                      url: "https://",
+                    })
+                  }
+                  onUpdateItem={base.onUpdateItem}
+                  onRemoveItem={base.onRemoveItem}
                 />
               );
             case "custom":
@@ -237,6 +265,59 @@ export function EditView({ onGoPublic }: Props) {
       label: "Settings",
     },
   ] as const;
+
+  const renderSaveButton = () => {
+    if (saveState === "saving") {
+      return (
+        <button
+          type="button"
+          disabled
+          className="flex items-center gap-1.5 text-sm px-3 py-1.5 rounded-lg font-medium opacity-75"
+          style={{ background: "var(--p-accent)", color: "#fff" }}
+          data-ocid="edit.save_button"
+        >
+          <Loader2 className="w-3.5 h-3.5 animate-spin" /> Saving...
+        </button>
+      );
+    }
+    if (saveState === "saved") {
+      return (
+        <button
+          type="button"
+          disabled
+          className="flex items-center gap-1.5 text-sm px-3 py-1.5 rounded-lg font-medium"
+          style={{ background: "#22c55e", color: "#fff" }}
+          data-ocid="edit.save_button"
+        >
+          <Check className="w-3.5 h-3.5" /> Saved!
+        </button>
+      );
+    }
+    if (saveState === "error") {
+      return (
+        <button
+          type="button"
+          onClick={handleSave}
+          className="flex items-center gap-1.5 text-sm px-3 py-1.5 rounded-lg font-medium"
+          style={{ background: "#ef4444", color: "#fff" }}
+          data-ocid="edit.save_button"
+        >
+          <X className="w-3.5 h-3.5" /> Failed — Retry
+        </button>
+      );
+    }
+    return (
+      <button
+        type="button"
+        onClick={handleSave}
+        className="flex items-center gap-1.5 text-sm px-3 py-1.5 rounded-lg font-medium transition-all hover:opacity-90"
+        style={{ background: "var(--p-accent)", color: "#fff" }}
+        data-ocid="edit.save_button"
+      >
+        <Save className="w-3.5 h-3.5" /> Save
+      </button>
+    );
+  };
 
   return (
     <div
@@ -288,6 +369,7 @@ export function EditView({ onGoPublic }: Props) {
           ))}
         </nav>
         <div className="flex items-center gap-2 ml-auto">
+          {renderSaveButton()}
           <button
             type="button"
             onClick={onGoPublic}
@@ -296,10 +378,10 @@ export function EditView({ onGoPublic }: Props) {
               background: "rgba(255,255,255,0.12)",
               color: "rgba(255,255,255,0.85)",
             }}
+            data-ocid="edit.preview_button"
           >
             <Eye className="w-3.5 h-3.5" /> Preview
           </button>
-          {/* Mobile settings trigger */}
           <button
             type="button"
             onClick={() => setShowMobileSettings(true)}
@@ -368,7 +450,6 @@ export function EditView({ onGoPublic }: Props) {
           style={{ background: "var(--p-bg)" }}
         >
           {sortedSections.map(renderSection)}
-          {/* Add section button */}
           <div className="px-6 md:px-12 py-8">
             <button
               type="button"
@@ -414,7 +495,6 @@ export function EditView({ onGoPublic }: Props) {
       {/* MOBILE SETTINGS SHEET */}
       {showMobileSettings && (
         <div className="fixed inset-0 z-50 lg:hidden">
-          {/* Backdrop */}
           <div
             className="absolute inset-0 bg-black/50"
             onClick={() => setShowMobileSettings(false)}
@@ -425,7 +505,6 @@ export function EditView({ onGoPublic }: Props) {
             tabIndex={-1}
             aria-label="Close settings"
           />
-          {/* Bottom sheet */}
           <div
             className="absolute bottom-0 left-0 right-0 rounded-t-2xl overflow-hidden flex flex-col"
             style={{

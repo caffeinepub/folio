@@ -7,32 +7,62 @@ import type {
   Section,
   SectionItem,
 } from "../types/portfolio";
+import { useActor } from "./useActor";
 
 const KEY = "folio_data";
 
-function load(): PortfolioData {
+function loadLocal(): PortfolioData | null {
   try {
     const raw = localStorage.getItem(KEY);
-    if (raw) return JSON.parse(raw) as PortfolioData;
+    if (raw) {
+      const parsed = JSON.parse(raw) as PortfolioData;
+      if (isValidPortfolio(parsed)) return parsed;
+    }
   } catch {}
-  return getSampleData();
+  return null;
 }
 
-function save(data: PortfolioData) {
-  try {
-    localStorage.setItem(KEY, JSON.stringify(data));
-  } catch {}
+function isValidPortfolio(data: unknown): data is PortfolioData {
+  if (!data || typeof data !== "object") return false;
+  const d = data as Record<string, unknown>;
+  return (
+    typeof d.profile === "object" &&
+    d.profile !== null &&
+    typeof d.settings === "object" &&
+    d.settings !== null &&
+    Array.isArray(d.sections)
+  );
 }
 
 export function usePortfolio() {
-  const [data, setData] = useState<PortfolioData>(load);
+  const { actor, isFetching } = useActor();
+  const [data, setData] = useState<PortfolioData>(
+    () => loadLocal() ?? getSampleData(),
+  );
+  const [loaded, setLoaded] = useState(false);
+
+  // Load from backend on mount
+  useEffect(() => {
+    if (!actor || isFetching || loaded) return;
+    actor
+      .getPortfolio()
+      .then((json) => {
+        if (json && json.trim() !== "") {
+          try {
+            const parsed = JSON.parse(json) as PortfolioData;
+            // Only use backend data if it's a valid portfolio structure
+            if (isValidPortfolio(parsed)) {
+              setData(parsed);
+            }
+          } catch {}
+        }
+        setLoaded(true);
+      })
+      .catch(() => setLoaded(true));
+  }, [actor, isFetching, loaded]);
 
   const update = useCallback((fn: (d: PortfolioData) => PortfolioData) => {
-    setData((prev) => {
-      const next = fn(prev);
-      save(next);
-      return next;
-    });
+    setData((prev) => fn(prev));
   }, []);
 
   const updateProfile = useCallback(
@@ -138,6 +168,25 @@ export function usePortfolio() {
     [update],
   );
 
+  const saveToBackend = useCallback(
+    async (pin: string): Promise<boolean> => {
+      if (!actor) return false;
+      try {
+        const json = JSON.stringify(data);
+        const ok = await actor.savePortfolio(json, pin);
+        if (ok) {
+          try {
+            localStorage.setItem(KEY, json);
+          } catch {}
+        }
+        return ok;
+      } catch {
+        return false;
+      }
+    },
+    [actor, data],
+  );
+
   return {
     data,
     updateProfile,
@@ -149,5 +198,6 @@ export function usePortfolio() {
     updateItem,
     removeItem,
     reorderSections,
+    saveToBackend,
   };
 }

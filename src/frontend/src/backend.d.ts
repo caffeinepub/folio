@@ -8,4 +8,7 @@ export interface None {
 }
 export type Option<T> = Some<T> | None;
 export interface backendInterface {
+    checkPin(pin: string): Promise<boolean>;
+    getPortfolio(): Promise<string>;
+    savePortfolio(newPortfolio: string, pin: string): Promise<boolean>;
 }

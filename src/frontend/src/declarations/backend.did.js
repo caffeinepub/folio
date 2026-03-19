@@ -8,10 +8,20 @@
 
 import { IDL } from '@icp-sdk/core/candid';
 
-export const idlService = IDL.Service({});
+export const idlService = IDL.Service({
+  'checkPin' : IDL.Func([IDL.Text], [IDL.Bool], ['query']),
+  'getPortfolio' : IDL.Func([], [IDL.Text], ['query']),
+  'savePortfolio' : IDL.Func([IDL.Text, IDL.Text], [IDL.Bool], []),
+});
 
 export const idlInitArgs = [];
 
-export const idlFactory = ({ IDL }) => { return IDL.Service({}); };
+export const idlFactory = ({ IDL }) => {
+  return IDL.Service({
+    'checkPin' : IDL.Func([IDL.Text], [IDL.Bool], ['query']),
+    'getPortfolio' : IDL.Func([], [IDL.Text], ['query']),
+    'savePortfolio' : IDL.Func([IDL.Text, IDL.Text], [IDL.Bool], []),
+  });
+};
 
 export const init = ({ IDL }) => { return []; };
