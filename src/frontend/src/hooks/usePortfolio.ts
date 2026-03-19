@@ -36,9 +36,8 @@ function isValidPortfolio(data: unknown): data is PortfolioData {
 
 export function usePortfolio() {
   const { actor, isFetching } = useActor();
-  const [data, setData] = useState<PortfolioData>(
-    () => loadLocal() ?? getSampleData(),
-  );
+  // Start with null -- do NOT show sample data to visitors before backend loads
+  const [data, setData] = useState<PortfolioData | null>(null);
   const [loaded, setLoaded] = useState(false);
 
   // Load from backend on mount
@@ -50,19 +49,25 @@ export function usePortfolio() {
         if (json && json.trim() !== "") {
           try {
             const parsed = JSON.parse(json) as PortfolioData;
-            // Only use backend data if it's a valid portfolio structure
             if (isValidPortfolio(parsed)) {
               setData(parsed);
+              setLoaded(true);
+              return;
             }
           } catch {}
         }
+        // Backend returned nothing valid -- fall back to local or sample
+        setData(loadLocal() ?? getSampleData());
         setLoaded(true);
       })
-      .catch(() => setLoaded(true));
+      .catch(() => {
+        setData(loadLocal() ?? getSampleData());
+        setLoaded(true);
+      });
   }, [actor, isFetching, loaded]);
 
   const update = useCallback((fn: (d: PortfolioData) => PortfolioData) => {
-    setData((prev) => fn(prev));
+    setData((prev) => (prev ? fn(prev) : prev));
   }, []);
 
   const updateProfile = useCallback(
@@ -170,7 +175,7 @@ export function usePortfolio() {
 
   const saveToBackend = useCallback(
     async (pin: string): Promise<boolean> => {
-      if (!actor) return false;
+      if (!actor || !data) return false;
       try {
         const json = JSON.stringify(data);
         const ok = await actor.savePortfolio(json, pin);
@@ -189,6 +194,7 @@ export function usePortfolio() {
 
   return {
     data,
+    loaded,
     updateProfile,
     updateSettings,
     updateSection,

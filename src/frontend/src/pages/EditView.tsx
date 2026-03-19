@@ -29,7 +29,12 @@ import { ProjectsSection } from "../components/sections/ProjectsSection";
 import { SkillsSection } from "../components/sections/SkillsSection";
 import type { usePortfolio } from "../hooks/usePortfolio";
 import { useTheme } from "../hooks/useTheme";
-import type { Section, SectionItem, SectionType } from "../types/portfolio";
+import type {
+  PortfolioData,
+  Section,
+  SectionItem,
+  SectionType,
+} from "../types/portfolio";
 
 function uid() {
   return Math.random().toString(36).slice(2);
@@ -77,7 +82,8 @@ interface Props {
 }
 
 export function EditView({ onGoPublic, pin, portfolio }: Props) {
-  const { data } = portfolio;
+  // data is guaranteed non-null here because App.tsx checks before rendering EditView
+  const data = portfolio.data as PortfolioData;
   useTheme(data.settings.theme, data.settings.fontPair);
 
   const [activeTab, setActiveTab] = useState<
@@ -319,6 +325,16 @@ export function EditView({ onGoPublic, pin, portfolio }: Props) {
     );
   };
 
+  const settingsPanelProps = {
+    settings: data.settings,
+    sections: data.sections,
+    profile: data.profile,
+    onUpdateSettings: portfolio.updateSettings,
+    onUpdateProfile: portfolio.updateProfile,
+    onToggleSection: handleToggleSection,
+    onMoveSection: handleMoveSection,
+  };
+
   return (
     <div
       className="flex flex-col h-screen"
@@ -481,13 +497,7 @@ export function EditView({ onGoPublic, pin, portfolio }: Props) {
             >
               Settings
             </div>
-            <SettingsPanel
-              settings={data.settings}
-              sections={data.sections}
-              onUpdateSettings={portfolio.updateSettings}
-              onToggleSection={handleToggleSection}
-              onMoveSection={handleMoveSection}
-            />
+            <SettingsPanel {...settingsPanelProps} />
           </aside>
         )}
       </div>
@@ -521,7 +531,7 @@ export function EditView({ onGoPublic, pin, portfolio }: Props) {
                 className="font-semibold text-sm"
                 style={{ color: "var(--p-text)" }}
               >
-                Settings — Themes &amp; Fonts
+                Settings
               </span>
               <button
                 type="button"
@@ -534,13 +544,7 @@ export function EditView({ onGoPublic, pin, portfolio }: Props) {
               </button>
             </div>
             <div className="overflow-y-auto flex-1">
-              <SettingsPanel
-                settings={data.settings}
-                sections={data.sections}
-                onUpdateSettings={portfolio.updateSettings}
-                onToggleSection={handleToggleSection}
-                onMoveSection={handleMoveSection}
-              />
+              <SettingsPanel {...settingsPanelProps} />
             </div>
           </div>
         </div>

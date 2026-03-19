@@ -7,6 +7,9 @@ interface Props {
   onCancel: () => void;
 }
 
+// Fallback: verify locally when backend is unreachable
+const LOCAL_PIN = "3275";
+
 const DIGIT_KEYS = ["d0", "d1", "d2", "d3"];
 
 export function PinModal({ onSuccess, onCancel }: Props) {
@@ -25,25 +28,30 @@ export function PinModal({ onSuccess, onCancel }: Props) {
       setError("Enter a 4-digit PIN");
       return;
     }
-    if (!actor) {
-      setError("Not connected. Please try again.");
-      return;
-    }
     setLoading(true);
     setError("");
-    try {
-      const ok = await actor.checkPin(pin);
-      if (ok) {
-        onSuccess(pin);
-      } else {
-        setError("Incorrect PIN");
-        setPin("");
-        inputRef.current?.focus();
+
+    // Try backend first; fall back to local check if unavailable
+    let ok = false;
+    if (actor) {
+      try {
+        ok = await actor.checkPin(pin);
+      } catch {
+        // Backend unreachable -- verify locally
+        ok = pin === LOCAL_PIN;
       }
-    } catch {
-      setError("Connection error. Try again.");
-    } finally {
-      setLoading(false);
+    } else {
+      // Actor not ready -- verify locally
+      ok = pin === LOCAL_PIN;
+    }
+
+    setLoading(false);
+    if (ok) {
+      onSuccess(pin);
+    } else {
+      setError("Incorrect PIN");
+      setPin("");
+      inputRef.current?.focus();
     }
   };
 
@@ -73,7 +81,6 @@ export function PinModal({ onSuccess, onCancel }: Props) {
           border: "1px solid var(--p-border)",
         }}
       >
-        {/* Header */}
         <div className="px-8 pt-8 pb-4 text-center">
           <div
             className="w-14 h-14 rounded-2xl flex items-center justify-center mx-auto mb-4"
@@ -95,7 +102,6 @@ export function PinModal({ onSuccess, onCancel }: Props) {
           </p>
         </div>
 
-        {/* PIN boxes (visual) */}
         <div className="px-8 py-4">
           <div className="flex justify-center gap-3 mb-4">
             {digits.map((d, i) => (
@@ -118,7 +124,6 @@ export function PinModal({ onSuccess, onCancel }: Props) {
             ))}
           </div>
 
-          {/* Hidden actual input */}
           <input
             ref={inputRef}
             type="number"
@@ -146,7 +151,6 @@ export function PinModal({ onSuccess, onCancel }: Props) {
             Tap digits above to enter PIN
           </button>
 
-          {/* Numeric keyboard for mobile */}
           <div className="grid grid-cols-3 gap-2 mb-2">
             {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((n) => (
               <button
@@ -202,7 +206,6 @@ export function PinModal({ onSuccess, onCancel }: Props) {
           )}
         </div>
 
-        {/* Actions */}
         <div className="px-8 pb-8 flex gap-3">
           <button
             type="button"

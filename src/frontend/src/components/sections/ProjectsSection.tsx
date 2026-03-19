@@ -1,5 +1,6 @@
 import { ExternalLink, Plus, Trash2 } from "lucide-react";
 import type { Section, SectionItem } from "../../types/portfolio";
+import { ensureUrl } from "../../utils/url";
 import { ImageUpload } from "../editor/ImageUpload";
 import { InlineEdit } from "../editor/InlineEdit";
 
@@ -184,7 +185,7 @@ export function ProjectsSection({
                             data-ocid="projects.input"
                           />
                           <input
-                            type="url"
+                            type="text"
                             value={link.url}
                             onChange={(e) => {
                               const newLinks = (item.links || []).map((l) =>
@@ -247,7 +248,7 @@ export function ProjectsSection({
                           .map((link) => (
                             <a
                               key={link.id}
-                              href={link.url}
+                              href={ensureUrl(link.url)}
                               target="_blank"
                               rel="noreferrer"
                               className="inline-flex items-center gap-1 text-xs font-medium px-2.5 py-1 rounded-full border transition-colors hover:bg-[var(--p-bg2)]"
@@ -262,7 +263,7 @@ export function ProjectsSection({
                           ))
                       : item.url && (
                           <a
-                            href={item.url}
+                            href={ensureUrl(item.url)}
                             target="_blank"
                             rel="noreferrer"
                             className="inline-flex items-center gap-1 text-sm font-medium"

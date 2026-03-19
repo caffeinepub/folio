@@ -10,6 +10,7 @@ import {
   Twitter,
 } from "lucide-react";
 import type { Profile, Section, SectionItem } from "../../types/portfolio";
+import { ensureUrl } from "../../utils/url";
 import { InlineEdit } from "../editor/InlineEdit";
 
 interface Props {
@@ -135,7 +136,7 @@ export function ContactSection({
                 />
               ) : (
                 <a
-                  href={profile.website}
+                  href={ensureUrl(profile.website)}
                   target="_blank"
                   rel="noreferrer"
                   className="text-sm hover:underline"
@@ -168,7 +169,7 @@ export function ContactSection({
                 />
               ) : (
                 <a
-                  href={profile.github}
+                  href={ensureUrl(profile.github)}
                   target="_blank"
                   rel="noreferrer"
                   className="text-sm hover:underline"
@@ -201,7 +202,7 @@ export function ContactSection({
                 />
               ) : (
                 <a
-                  href={profile.linkedin}
+                  href={ensureUrl(profile.linkedin)}
                   target="_blank"
                   rel="noreferrer"
                   className="text-sm hover:underline"
@@ -234,7 +235,7 @@ export function ContactSection({
                 />
               ) : (
                 <a
-                  href={profile.twitter}
+                  href={ensureUrl(profile.twitter)}
                   target="_blank"
                   rel="noreferrer"
                   className="text-sm hover:underline"
@@ -275,7 +276,7 @@ export function ContactSection({
                 </div>
               ) : (
                 <a
-                  href={item.url}
+                  href={ensureUrl(item.url)}
                   target="_blank"
                   rel="noreferrer"
                   className="text-sm hover:underline truncate"

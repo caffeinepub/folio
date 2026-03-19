@@ -1,5 +1,6 @@
 import { Github, Globe, Linkedin, Mail, MapPin, Twitter } from "lucide-react";
 import type { Profile } from "../../types/portfolio";
+import { ensureUrl } from "../../utils/url";
 import { ImageUpload } from "../editor/ImageUpload";
 import { InlineEdit } from "../editor/InlineEdit";
 
@@ -137,7 +138,7 @@ export function HeroSection({ profile, isEditing, onUpdate }: Props) {
           <div className="flex gap-3 mt-4 justify-center md:justify-start">
             {(profile.github || isEditing) && (
               <a
-                href={profile.github || "#"}
+                href={ensureUrl(profile.github)}
                 target="_blank"
                 rel="noreferrer"
                 className="p-2 rounded-lg transition-colors hover:bg-[var(--p-bg2)]"
@@ -148,7 +149,7 @@ export function HeroSection({ profile, isEditing, onUpdate }: Props) {
             )}
             {(profile.linkedin || isEditing) && (
               <a
-                href={profile.linkedin || "#"}
+                href={ensureUrl(profile.linkedin)}
                 target="_blank"
                 rel="noreferrer"
                 className="p-2 rounded-lg transition-colors hover:bg-[var(--p-bg2)]"
@@ -159,7 +160,7 @@ export function HeroSection({ profile, isEditing, onUpdate }: Props) {
             )}
             {(profile.twitter || isEditing) && (
               <a
-                href={profile.twitter || "#"}
+                href={ensureUrl(profile.twitter)}
                 target="_blank"
                 rel="noreferrer"
                 className="p-2 rounded-lg transition-colors hover:bg-[var(--p-bg2)]"
@@ -170,7 +171,7 @@ export function HeroSection({ profile, isEditing, onUpdate }: Props) {
             )}
             {(profile.website || isEditing) && (
               <a
-                href={profile.website || "#"}
+                href={ensureUrl(profile.website)}
                 target="_blank"
                 rel="noreferrer"
                 className="p-2 rounded-lg transition-colors hover:bg-[var(--p-bg2)]"

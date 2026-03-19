@@ -1,5 +1,6 @@
 import { Award, ExternalLink, Plus, Trash2 } from "lucide-react";
 import type { Section, SectionItem } from "../../types/portfolio";
+import { ensureUrl } from "../../utils/url";
 import { ImageUpload } from "../editor/ImageUpload";
 import { InlineEdit } from "../editor/InlineEdit";
 
@@ -37,7 +38,7 @@ export function CertificatesSection({
                 borderColor: "var(--p-border)",
               }}
             >
-              {/* IMAGE: natural ratio, no cropping — certificate images fully visible */}
+              {/* IMAGE: natural ratio, no cropping */}
               <div
                 className="w-full h-44 flex items-center justify-center p-2"
                 style={{
@@ -106,7 +107,6 @@ export function CertificatesSection({
                   )}
                 </div>
 
-                {/* Issuer */}
                 <p
                   className="text-sm mt-1 font-medium"
                   style={{ color: "var(--p-accent)" }}
@@ -122,7 +122,6 @@ export function CertificatesSection({
                   )}
                 </p>
 
-                {/* Year / Date — now editable */}
                 <p className="text-xs mt-1" style={{ color: "var(--p-text2)" }}>
                   {isEditing ? (
                     <InlineEdit
@@ -137,7 +136,6 @@ export function CertificatesSection({
                   )}
                 </p>
 
-                {/* Verify URL — now editable */}
                 {isEditing ? (
                   <div className="mt-2">
                     <p
@@ -155,7 +153,7 @@ export function CertificatesSection({
                 ) : (
                   item.url && (
                     <a
-                      href={item.url}
+                      href={ensureUrl(item.url)}
                       target="_blank"
                       rel="noreferrer"
                       className="inline-flex items-center gap-1 mt-2 text-sm font-medium"
