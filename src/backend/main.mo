@@ -4,7 +4,8 @@ import Text "mo:core/Text";
 
 actor {
   let correctPIN = "3275";
-  var portfolioJSON = "{\"hero\": \"Lancelot\"}";
+  // stable var ensures data survives canister upgrades
+  stable var portfolioJSON = "";
 
   public query ({ caller }) func getPortfolio () : async Text {
     portfolioJSON;

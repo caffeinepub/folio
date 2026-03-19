@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { getSampleData } from "../data/sampleData";
 import type {
   PortfolioData,
@@ -22,6 +22,12 @@ function loadLocal(): PortfolioData | null {
   return null;
 }
 
+function saveLocal(data: PortfolioData) {
+  try {
+    localStorage.setItem(KEY, JSON.stringify(data));
+  } catch {}
+}
+
 function isValidPortfolio(data: unknown): data is PortfolioData {
   if (!data || typeof data !== "object") return false;
   const d = data as Record<string, unknown>;
@@ -34,11 +40,20 @@ function isValidPortfolio(data: unknown): data is PortfolioData {
   );
 }
 
+function sleep(ms: number) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
 export function usePortfolio() {
   const { actor, isFetching } = useActor();
   // Start with null -- do NOT show sample data to visitors before backend loads
   const [data, setData] = useState<PortfolioData | null>(null);
   const [loaded, setLoaded] = useState(false);
+  // Track latest actor in a ref so saveToBackend always uses the current actor
+  const actorRef = useRef(actor);
+  useEffect(() => {
+    actorRef.current = actor;
+  }, [actor]);
 
   // Load from backend on mount
   useEffect(() => {
@@ -57,11 +72,17 @@ export function usePortfolio() {
           } catch {}
         }
         // Backend returned nothing valid -- fall back to local or sample
-        setData(loadLocal() ?? getSampleData());
+        const local = loadLocal();
+        if (local) {
+          setData(local);
+        } else {
+          setData(getSampleData());
+        }
         setLoaded(true);
       })
       .catch(() => {
-        setData(loadLocal() ?? getSampleData());
+        const local = loadLocal();
+        setData(local ?? getSampleData());
         setLoaded(true);
       });
   }, [actor, isFetching, loaded]);
@@ -175,21 +196,39 @@ export function usePortfolio() {
 
   const saveToBackend = useCallback(
     async (pin: string): Promise<boolean> => {
-      if (!actor || !data) return false;
+      // Use actorRef to always get the latest actor, even if it was null at hook creation
+      const currentActor = actorRef.current;
+      if (!currentActor || !data) return false;
+
+      const json = JSON.stringify(data);
+
+      // Attempt 1
       try {
-        const json = JSON.stringify(data);
-        const ok = await actor.savePortfolio(json, pin);
+        const ok = await currentActor.savePortfolio(json, pin);
         if (ok) {
-          try {
-            localStorage.setItem(KEY, json);
-          } catch {}
+          saveLocal(data);
+          return true;
         }
-        return ok;
+      } catch {
+        // first attempt failed, will retry
+      }
+
+      // Wait and retry once
+      await sleep(2000);
+      const retryActor = actorRef.current;
+      if (!retryActor) return false;
+      try {
+        const ok = await retryActor.savePortfolio(json, pin);
+        if (ok) {
+          saveLocal(data);
+          return true;
+        }
+        return false;
       } catch {
         return false;
       }
     },
-    [actor, data],
+    [data],
   );
 
   return {
